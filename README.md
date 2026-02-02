@@ -60,6 +60,11 @@ We recommend managing environments with **conda** (Python isolation) and **uv**
 See [`docs/env.md`](docs/env.md) for the full setup (PyTorch/CUDA is installed
 manually per machine; Python deps are installed via `uv`).
 
+### Efficiency Benchmark
+
+See [`docs/benchmarks/kitti_val_efficiency.md`](docs/benchmarks/kitti_val_efficiency.md) for
+how to benchmark FPS / VRAM / params / train sec/iter on KITTI val.
+
 ### PV-RCNN Baseline Integration
 1.  **Set up environment:** follow [`docs/env.md`](docs/env.md) (section "mm3d (mmdetection3d)").
 2.  **Verify successful installation (optional):**
