@@ -14,6 +14,7 @@ Benchmark contract (for this repo):
 import argparse
 import json
 import os
+import os.path as osp
 import time
 from typing import Any, Dict, List, Optional
 
@@ -21,6 +22,7 @@ import torch
 from mmengine.config import Config, DictAction
 from mmengine.registry import init_default_scope
 from mmengine.runner import Runner, autocast
+from mmengine.optim import OptimWrapper
 
 
 def parse_args() -> argparse.Namespace:
@@ -169,6 +171,14 @@ def benchmark_one(
     if extra_cfg_options:
         cfg.merge_from_dict(extra_cfg_options)
 
+    # Runner.from_cfg requires `work_dir` to exist in cfg; mirror tools/train.py.
+    if cfg.get("work_dir", None) is None:
+        cfg.work_dir = osp.join(
+            "./work_dirs",
+            "bench_efficiency",
+            osp.splitext(osp.basename(config_path))[0],
+        )
+
     # Force FP32.
     _force_fp32(cfg)
 
@@ -195,7 +205,14 @@ def benchmark_one(
     optim_wrapper = getattr(runner, "optim_wrapper", None)
     assert val_loader is not None, "val_dataloader/test_dataloader not found in config."
     assert train_loader is not None, "train_dataloader not found in config."
-    assert optim_wrapper is not None, "optim_wrapper not built."
+
+    # In MMEngine, `Runner.from_cfg` stores `optim_wrapper` as a config dict.
+    # The real OptimWrapper is built during `runner.train()`. Since we are
+    # running a manual train_step loop (benchmarking only), build it here.
+    if optim_wrapper is not None and not isinstance(optim_wrapper, OptimWrapper):
+        optim_wrapper = runner.build_optim_wrapper(optim_wrapper)
+        runner.optim_wrapper = optim_wrapper
+    assert isinstance(optim_wrapper, OptimWrapper), "optim_wrapper not built."
 
     # Inference (includes postprocess via test_step).
     model.eval()

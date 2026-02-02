@@ -21,8 +21,7 @@ import torch
 
 from pcdet.config import cfg, cfg_from_list, cfg_from_yaml_file
 from pcdet.datasets import build_dataloader
-from pcdet.models import build_network, model_fn_decorator
-from pcdet.utils import common_utils
+from pcdet.models import build_network, load_data_to_gpu, model_fn_decorator
 from train_utils.optimization import build_optimizer
 
 
@@ -189,8 +188,8 @@ def benchmark_one(
     model.eval()
 
     def _infer_step(batch_dict):
-        common_utils.load_data_to_gpu(batch_dict)
         with torch.no_grad():
+            load_data_to_gpu(batch_dict)
             model(batch_dict)
 
     infer_stats = _bench_loop(
@@ -207,8 +206,7 @@ def benchmark_one(
     model_func = model_fn_decorator()
 
     def _train_step(batch_dict):
-        common_utils.load_data_to_gpu(batch_dict)
-        optimizer.zero_grad(set_to_none=True)
+        optimizer.zero_grad()
         loss, _, _ = model_func(model, batch_dict)
         loss.backward()
         optimizer.step()
