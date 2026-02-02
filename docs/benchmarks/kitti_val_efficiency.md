@@ -15,22 +15,24 @@ How to run:
 
 ```bash
 # PV-RCNN (mm3d)
-python mmdetection3d/tools/bench_efficiency.py \
+cd mmdetection3d
+python tools/bench_efficiency.py \
   --configs \
-    mmdetection3d/configs/RefineMoE/pv_rcnn.py \
-    mmdetection3d/configs/RefineMoE/AM.py \
-    mmdetection3d/configs/RefineMoE/SM.py \
+    configs/RefineMoE/pv_rcnn.py \
+    configs/RefineMoE/AM.py \
+    configs/RefineMoE/SM.py \
   --batch-size 1 --warmup 50 --iters 200 \
-  --out results/bench/kitti_val_mm3d.json
+  --out ../results/bench/kitti_val_mm3d.json
 
 # VoxelRCNN (FSHNet)
-python FSHNet/tools/bench_efficiency.py \
+cd ../FSHNet
+python tools/bench_efficiency.py \
   --cfgs \
-    FSHNet/tools/cfgs/voxelrcnn_kitti_models/voxelrcnn_kitti.yaml \
-    FSHNet/tools/cfgs/voxelrcnn_kitti_models/am_kitti.yaml \
-    FSHNet/tools/cfgs/voxelrcnn_kitti_models/sm_kitti.yaml \
+    tools/cfgs/voxelrcnn_kitti_models/voxelrcnn_kitti.yaml \
+    tools/cfgs/voxelrcnn_kitti_models/am_kitti.yaml \
+    tools/cfgs/voxelrcnn_kitti_models/sm_kitti.yaml \
   --batch_size 1 --warmup 50 --iters 200 \
-  --out results/bench/kitti_val_fshnet.json
+  --out ../results/bench/kitti_val_fshnet.json
 ```
 
 ## PV-RCNN (MMDet3D)

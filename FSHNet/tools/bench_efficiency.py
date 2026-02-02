@@ -15,6 +15,8 @@ import os
 import time
 from typing import Any, Dict, List, Optional
 
+from pathlib import Path
+
 import torch
 
 from pcdet.config import cfg, cfg_from_list, cfg_from_yaml_file
@@ -118,7 +120,18 @@ def _bench_loop(
 
 def _load_cfg(yaml_path: str, set_cfgs: Optional[List[str]]) -> Any:
     # Note: `cfg` is a global object in this codebase.
-    cfg_from_yaml_file(yaml_path, cfg)
+    # FSHNet yaml configs commonly reference base configs via paths like
+    # `tools/cfgs/...`, which are relative to the FSHNet root. To make this
+    # script robust when invoked from repo root (or elsewhere), we temporarily
+    # chdir to the FSHNet root while parsing.
+    fshnet_root = Path(__file__).resolve().parents[1]
+    yaml_abs = str(Path(yaml_path).resolve())
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(str(fshnet_root))
+        cfg_from_yaml_file(yaml_abs, cfg)
+    finally:
+        os.chdir(old_cwd)
     if set_cfgs is not None:
         cfg_from_list(set_cfgs, cfg)
     return cfg
