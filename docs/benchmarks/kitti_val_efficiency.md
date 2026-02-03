@@ -35,7 +35,7 @@ python tools/bench_efficiency.py \
   --out ../results/bench/kitti_val_fshnet.json
 ```
 
-## PV-RCNN (MMDet3D)
+## PV-RCNN baseline (mmdetection3d codebase)
 
 | Variant | Params (M) | Infer FPS | Infer peak VRAM (MiB) | Train sec/iter | Train peak VRAM (MiB) |
 |---|---:|---:|---:|---:|---:|
@@ -43,7 +43,13 @@ python tools/bench_efficiency.py \
 | AM (`AM.py`) |  |  |  |  |  |
 | SM (`SM.py`) |  |  |  |  |  |
 
-## VoxelRCNN (FSHNet)
+## VoxelRCNN baseline (FSHNet codebase)
+
+Note:
+
+- The `FSHNet/` codebase also contains FSHNet baselines (e.g. `FSHRCNN`) but
+  those configs in this repo target Waymo, not KITTI. They are intentionally
+  not included in this KITTI-val benchmark table.
 
 | Variant | Params (M) | Infer FPS | Infer peak VRAM (MiB) | Train sec/iter | Train peak VRAM (MiB) |
 |---|---:|---:|---:|---:|---:|

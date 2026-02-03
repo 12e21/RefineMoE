@@ -3,8 +3,10 @@
 This repo contains two upstream-derived codebases with different dependency
 stacks. Keep them in separate environments:
 
-- `mm3d` for `mmdetection3d/`
-- `fshnet` for `FSHNet/`
+- Codebase: `mmdetection3d/` (MMDet3D). Conda env name: `mm3d`.
+  - Runs PV-RCNN baseline + RefineMoE variants for KITTI in this repo.
+- Codebase: `FSHNet/` (OpenPCDet-style). Conda env name: `fshnet`.
+  - Runs VoxelRCNN baseline for KITTI and FSHNet baselines (primarily Waymo).
 
 Principles:
 
@@ -17,7 +19,7 @@ Principles:
 - conda (Miniconda/Mambaforge)
 - CUDA toolkit/driver matching your chosen PyTorch wheels (if using GPU)
 
-## mm3d (mmdetection3d)
+## mmdetection3d codebase (env: mm3d)
 
 Create the environment:
 
@@ -46,7 +48,7 @@ mim install 'mmcv==2.0.0rc4'
 mim install 'mmdet==3.0.0'
 ```
 
-Install this repo's `mmdetection3d/` subtree:
+Install this repo's `mmdetection3d/` codebase:
 
 ```bash
 # Install test deps (includes pytest/yapf/isort/flake8 via requirements)
@@ -68,7 +70,7 @@ Notes:
 - Optional performance deps (e.g. `cumm`, `spconv`) depend on CUDA; install them
   only if your experiment/config requires them.
 
-## fshnet (FSHNet)
+## FSHNet codebase (env: fshnet)
 
 Create the environment:
 
