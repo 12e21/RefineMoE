@@ -54,11 +54,27 @@ Below are the 3D detection performance (AP and APH) for the Car class on a 10-fr
 We recommend managing environments with **conda** (Python isolation) and **uv**
 (fast, reproducible pip installs). Keep two separate environments:
 
-- `mm3d` for `mmdetection3d/`
-- `fshnet` for `FSHNet/`
+- Codebase: `mmdetection3d/` (MMDet3D). Conda env name: `mm3d`.
+- Codebase: `FSHNet/` (FSHNet/OpenPCDet-style). Conda env name: `fshnet`.
 
 See [`docs/env.md`](docs/env.md) for the full setup (PyTorch/CUDA is installed
 manually per machine; Python deps are installed via `uv`).
+
+### Efficiency Benchmark
+
+See [`docs/benchmarks/kitti_val_efficiency.md`](docs/benchmarks/kitti_val_efficiency.md) for
+how to benchmark FPS / VRAM / params / train sec/iter on KITTI val.
+
+### Experiments
+
+- SM branch-count sweep (training-only configs):
+  [`docs/experiments/sm_branch_sweep.md`](docs/experiments/sm_branch_sweep.md)
+
+In this repo:
+
+- PV-RCNN baseline + RefineMoE variants run in the `mmdetection3d/` codebase.
+- VoxelRCNN baseline runs in the `FSHNet/` codebase (FSHNet codebase also
+  contains FSHNet baselines, primarily configured for Waymo).
 
 ### PV-RCNN Baseline Integration
 1.  **Set up environment:** follow [`docs/env.md`](docs/env.md) (section "mm3d (mmdetection3d)").

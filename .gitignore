@@ -1,0 +1,18 @@
+# Repo-level ignores (outputs live at repo root)
+
+# Results / artifacts
+results/
+
+# Large local artifacts (repo-specific)
+mmdetection3d/tp_erros_pts.csv
+
+# Common Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Logs / checkpoints
+*.log
+*.pth
