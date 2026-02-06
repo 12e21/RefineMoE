@@ -1,0 +1,15 @@
+# Repo-level ignores (outputs live at repo root)
+
+# Results / artifacts
+results/
+
+# Common Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Logs / checkpoints
+*.log
+*.pth

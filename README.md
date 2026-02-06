@@ -65,6 +65,11 @@ manually per machine; Python deps are installed via `uv`).
 See [`docs/benchmarks/kitti_val_efficiency.md`](docs/benchmarks/kitti_val_efficiency.md) for
 how to benchmark FPS / VRAM / params / train sec/iter on KITTI val.
 
+### Experiments
+
+- SM branch-count sweep (training-only configs):
+  [`docs/experiments/sm_branch_sweep.md`](docs/experiments/sm_branch_sweep.md)
+
 In this repo:
 
 - PV-RCNN baseline + RefineMoE variants run in the `mmdetection3d/` codebase.
