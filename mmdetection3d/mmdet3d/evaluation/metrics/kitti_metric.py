@@ -259,7 +259,7 @@ class KittiMetric(BaseMetric):
             self.data_infos[result['sample_idx']]['kitti_annos']
             for result in results
         ]
-        self.save_results_for_vis(results,save_json_path="results_for_vis/result.json")
+        # self.save_results_for_vis(results,save_json_path="results_for_vis/result.json")
         
         for metric in self.metrics:
             ap_dict = self.kitti_evaluate(
