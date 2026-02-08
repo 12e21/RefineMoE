@@ -56,8 +56,17 @@ def _add_title(im: Image.Image, title: str, *, bar_h: int = 28) -> Image.Image:
     draw = ImageDraw.Draw(out)
     # Use default bitmap font for portability.
     font = ImageFont.load_default()
-    tw, th = draw.textsize(title, font=font)
-    draw.text(((w - tw) // 2, (bar_h - th) // 2), title, fill=(0, 0, 0), font=font)
+
+    # Pillow>=10 removes ImageDraw.textsize; use textbbox for consistent sizing.
+    bbox = draw.textbbox((0, 0), title, font=font)
+    tw = bbox[2] - bbox[0]
+    th = bbox[3] - bbox[1]
+    draw.text(
+        ((w - tw) // 2, (bar_h - th) // 2),
+        title,
+        fill=(0, 0, 0),
+        font=font,
+    )
     return out
 
 

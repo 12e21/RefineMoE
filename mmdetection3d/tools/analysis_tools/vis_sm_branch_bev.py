@@ -36,6 +36,29 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-samples", type=int, default=-1)
     parser.add_argument("--score-thr", type=float, default=0.3)
     parser.add_argument(
+        "--draw-points",
+        action="store_true",
+        help="Draw BEV point cloud as background scatter",
+    )
+    parser.add_argument(
+        "--max-points",
+        type=int,
+        default=50000,
+        help="Max points to draw per frame (randomly subsampled)",
+    )
+    parser.add_argument(
+        "--point-size",
+        type=float,
+        default=0.15,
+        help="Scatter marker size for points",
+    )
+    parser.add_argument(
+        "--point-alpha",
+        type=float,
+        default=0.15,
+        help="Scatter alpha for points",
+    )
+    parser.add_argument(
         "--xlim",
         type=float,
         nargs=2,
@@ -66,16 +89,39 @@ def _mkdir(path: str) -> None:
 def _bev_polys_from_boxes(boxes_3d) -> np.ndarray:
     """Return (N, 4, 2) array from BaseInstance3DBoxes.
 
-    Use 3D corners to avoid assuming BEV parameter ordering.
+    Use BEV (x, y, dx, dy, yaw) to build an ordered rectangle.
+    This avoids relying on the corner indexing/order of `boxes_3d.corners`.
     """
-    if boxes_3d is None:
+    if boxes_3d is None or len(boxes_3d) == 0:
         return np.zeros((0, 4, 2), dtype=np.float32)
-    if len(boxes_3d) == 0:
-        return np.zeros((0, 4, 2), dtype=np.float32)
-    corners = boxes_3d.corners  # (N, 8, 3)
-    # Bottom face corners are the first 4 corners for mmdet3d boxes.
-    bev = corners[:, [0, 1, 2, 3], :2]
-    return bev.detach().cpu().numpy().astype(np.float32)
+
+    bev = boxes_3d.bev  # (N, 5): x, y, dx, dy, yaw
+    num = bev.shape[0]
+    centers = bev[:, 0:2]
+    dx = bev[:, 2]
+    dy = bev[:, 3]
+    yaw = bev[:, 4]
+
+    # (4, 2) corners in box local frame (x forward, y left).
+    # Order is consistent for drawing a closed polygon.
+    base = torch.tensor(
+        [[0.5, 0.5], [0.5, -0.5], [-0.5, -0.5], [-0.5, 0.5]],
+        device=bev.device,
+        dtype=bev.dtype,
+    )
+    # (N, 4, 2)
+    dims = torch.stack([dx, dy], dim=-1)
+    corners = base[None, :, :] * dims[:, None, :]
+
+    c = torch.cos(yaw)
+    s = torch.sin(yaw)
+    rot = torch.stack(
+        [torch.stack([c, -s], dim=-1), torch.stack([s, c], dim=-1)],
+        dim=-2,
+    )  # (N, 2, 2)
+    corners = torch.matmul(corners, rot.transpose(-1, -2))
+    corners = corners + centers[:, None, :]
+    return corners.detach().cpu().numpy().astype(np.float32)
 
 
 def _draw_polys(ax, polys: np.ndarray, *, color: str, lw: float) -> None:
@@ -83,6 +129,18 @@ def _draw_polys(ax, polys: np.ndarray, *, color: str, lw: float) -> None:
         xs = np.concatenate([poly[:, 0], poly[:1, 0]])
         ys = np.concatenate([poly[:, 1], poly[:1, 1]])
         ax.plot(xs, ys, color=color, linewidth=lw)
+
+
+def _points_xy(points) -> np.ndarray:
+    """Extract (N, 2) XY from a BasePoints or Tensor."""
+    if points is None:
+        return np.zeros((0, 2), dtype=np.float32)
+    if hasattr(points, "tensor"):
+        pts = points.tensor
+    else:
+        pts = points
+    xy = pts[:, 0:2].detach().cpu().numpy().astype(np.float32)
+    return xy
 
 
 def _get_sample_idx(data_sample) -> str:
@@ -145,6 +203,10 @@ def main() -> None:
     cfg.load_from = args.checkpoint
 
     runner = Runner.from_cfg(cfg)
+    # `Runner.from_cfg` does not automatically load weights; `tools/test.py`
+    # loads via `runner.test()`. Since we call `model.test_step()` directly,
+    # load checkpoint explicitly here.
+    runner.load_checkpoint(args.checkpoint)
     model = runner.model
     model.eval()
 
@@ -188,6 +250,22 @@ def main() -> None:
             ax.set_ylim(args.ylim[0], args.ylim[1])
             ax.set_aspect("equal", adjustable="box")
             ax.axis("off")
+
+            if args.draw_points:
+                pts_xy = _points_xy(data_batch["inputs"]["points"][0])
+                if args.max_points > 0 and pts_xy.shape[0] > args.max_points:
+                    idx = np.random.choice(
+                        pts_xy.shape[0], args.max_points, replace=False
+                    )
+                    pts_xy = pts_xy[idx]
+                ax.scatter(
+                    pts_xy[:, 0],
+                    pts_xy[:, 1],
+                    s=args.point_size,
+                    c="#808080",
+                    alpha=args.point_alpha,
+                    linewidths=0,
+                )
 
             # Draw GT then pred on top.
             _draw_polys(ax, gt_polys, color="#00aa00", lw=1.2)
