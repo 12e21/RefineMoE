@@ -36,6 +36,31 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-samples", type=int, default=-1)
     parser.add_argument("--score-thr", type=float, default=0.3)
     parser.add_argument(
+        "--figsize",
+        type=float,
+        nargs=2,
+        default=[8.0, 6.0],
+        help="Figure size in inches, e.g. --figsize 8 6",
+    )
+    parser.add_argument(
+        "--dpi",
+        type=int,
+        default=300,
+        help="Output DPI (higher -> higher resolution)",
+    )
+    parser.add_argument(
+        "--lw-gt",
+        type=float,
+        default=0.8,
+        help="Line width for GT boxes",
+    )
+    parser.add_argument(
+        "--lw-pred",
+        type=float,
+        default=0.7,
+        help="Line width for predicted boxes",
+    )
+    parser.add_argument(
         "--draw-points",
         action="store_true",
         help="Draw BEV point cloud as background scatter",
@@ -245,7 +270,9 @@ def main() -> None:
             pred_polys = _bev_polys_from_boxes(pred_boxes)
             gt_polys = _bev_polys_from_boxes(gt_boxes)
 
-            fig, ax = plt.subplots(figsize=(6, 4), dpi=200)
+            fig, ax = plt.subplots(
+                figsize=(args.figsize[0], args.figsize[1]), dpi=args.dpi
+            )
             ax.set_xlim(args.xlim[0], args.xlim[1])
             ax.set_ylim(args.ylim[0], args.ylim[1])
             ax.set_aspect("equal", adjustable="box")
@@ -268,8 +295,9 @@ def main() -> None:
                 )
 
             # Draw GT then pred on top.
-            _draw_polys(ax, gt_polys, color="#00aa00", lw=1.2)
-            _draw_polys(ax, pred_polys, color="#cc0000", lw=1.0)
+            _draw_polys(ax, gt_polys, color="#00aa00", lw=args.lw_gt)
+            # Pred: orange for better contrast.
+            _draw_polys(ax, pred_polys, color="#ff7a00", lw=args.lw_pred)
 
             out_path = osp.join(out_dir, f"{sample_id}.png")
             fig.savefig(out_path, bbox_inches="tight", pad_inches=0.02)
