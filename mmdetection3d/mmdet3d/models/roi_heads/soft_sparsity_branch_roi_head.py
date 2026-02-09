@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import torch
 from mmdet.models.task_modules import AssignResult
@@ -12,6 +12,9 @@ from mmdet3d.structures import bbox3d2roi
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import InstanceList
 from mmcv.ops.points_in_boxes import points_in_boxes_all
+
+# Register optional gating modules.
+from .gating import sm_gating as _sm_gating  # noqa: F401
 
 
 @MODELS.register_module()
@@ -39,6 +42,7 @@ class SoftSparsityBranchRoiHead(Base3DRoIHead):
         num_branch: int = 2,
         global_max: int = 10,
         sigma_scale: float = 1.0,
+        gating_cfg: Optional[dict] = None,
         semantic_head: Optional[dict] = None,
         bbox_roi_extractor: Optional[dict] = None,
         bbox_head: Optional[dict] = None,
@@ -58,6 +62,11 @@ class SoftSparsityBranchRoiHead(Base3DRoIHead):
         self.num_branch = num_branch
         self.global_max = global_max
         self.sigma_scale = sigma_scale
+
+        # Optional alternative gating mechanisms.
+        self.gating = (
+            MODELS.build(cast(dict, gating_cfg)) if gating_cfg is not None else None
+        )
 
         self.init_assigner_sampler()
 
@@ -117,12 +126,15 @@ class SoftSparsityBranchRoiHead(Base3DRoIHead):
         bbox_list = [res.bboxes for res in sample_results]
         points_count_list = self.count_points_in_bbox(source_points_list, bbox_list)
 
-        sparsity_scores_list = self.sparsity_scoring(
-            points_count_list=points_count_list,
-            branch_num=self.num_branch,
-            global_max=self.global_max,
-            sigma_scale=self.sigma_scale,
-        )
+        if self.gating is not None:
+            sparsity_scores_list = self.gating(points_count_list)
+        else:
+            sparsity_scores_list = self.sparsity_scoring(
+                points_count_list=points_count_list,
+                branch_num=self.num_branch,
+                global_max=self.global_max,
+                sigma_scale=self.sigma_scale,
+            )
         stacked_sparsity_scores = torch.stack(sparsity_scores_list).reshape(
             -1, sparsity_scores_list[0].shape[-1]
         )
@@ -189,12 +201,15 @@ class SoftSparsityBranchRoiHead(Base3DRoIHead):
         bbox_list = [res.bboxes_3d.tensor for res in rpn_results_list]
         points_count_list = self.count_points_in_bbox(source_points_list, bbox_list)
 
-        sparsity_scores_list = self.sparsity_scoring(
-            points_count_list=points_count_list,
-            branch_num=self.num_branch,
-            global_max=self.global_max,
-            sigma_scale=self.sigma_scale,
-        )
+        if self.gating is not None:
+            sparsity_scores_list = self.gating(points_count_list)
+        else:
+            sparsity_scores_list = self.sparsity_scoring(
+                points_count_list=points_count_list,
+                branch_num=self.num_branch,
+                global_max=self.global_max,
+                sigma_scale=self.sigma_scale,
+            )
 
         stacked_sparsity_scores = torch.stack(sparsity_scores_list).reshape(
             -1, sparsity_scores_list[0].shape[-1]
